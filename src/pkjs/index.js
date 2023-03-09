@@ -245,7 +245,6 @@ var last_detected_loc = {
 
 var ForecastDataJSON;
 var WeatherDataJSON;
-var weather_string_uv = "UV xx";
 
 var xhrRequest = function (url, type, callback) {
   var xhr = new XMLHttpRequest();
@@ -261,10 +260,12 @@ var UVxhrRequest = function (url, type, callback) {
   xhr.onload = function () {
     callback(this.responseText);
   };
-  xhr.open(type, url, false);
+  xhr.open(type, url, true);
   xhr.setRequestHeader("x-access-token", "openuv-3steprlez0pyca-io");
   xhr.send();
 };
+
+
 
 function locationSuccess(pos) {
   console.log("locationSuccess Begin");
@@ -308,7 +309,7 @@ function locationError(err) {
 function SendToPebble(pos, use_default) {
   var url;
   var url_forecast;
-  var uvURL;
+  var weather_string_uv = "UVinit";
   
   var multiplier = 10000;
   var pos_lat = Math.round(multiplier*pos.coords.latitude)/multiplier;
@@ -344,35 +345,53 @@ function SendToPebble(pos, use_default) {
   }
 
   // UV Data Fetch and Handle
-  var uvData;
+  var uvURL = "https://api.openuv.io/api/v1/uv?lat=" + pos_lat + "&lng=" + pos_lon;
+  // uvURL = "https://api.openuv.io/api/v1/uv?lat=" + "28.39" + "&lng=" + "84.12";
+
+  var UVFetch_error = 1;
+  var uvValue;
   
-  // uvURL = "https://api.openuv.io/api/v1/uv?lat=" + pos_lat + "&lng=" + pos_lon;
-  uvURL = "https://api.openuv.io/api/v1/uv?lat=" + "28.39" + "&lng=" + "84.12";
   UVxhrRequest(uvURL, 'GET', 
     function(responseText) {
+      // console.log("\n\n =============== INSIDE UV func !");
+      var uvData;
       try {
         uvData = JSON.parse(responseText);
-        weather_string_uv = "UV " + Math.round(uvData.result.uv);
-        weather_string_uv = "UV09";
         // cwLayer.text = weather_string_uv;
-        console.log("UV received successfully: " + weather_string_uv);
+        UVFetch_error = 0;
+        uvValue = uvData.result.uv;
+        weather_string_uv = "UV " + Math.round(uvValue);
+        console.log("\n\n =============== UV 1 received successfully :====>>", uvValue);
       } catch (e) {
-        weather_string_uv = "UV " + Math.round(11);
-        weather_string_uv = "UV09";
-        // cwLayer.text = weather_string_uv;
-        console.log("UV fetch failed !" + e);
+        console.log("UV 1 fetch failed :" + responseText);
+
+        uvURL = "https://api.weatherbit.io/v2.0/current?lat="+pos_lat+"&lon="+pos_lon+"&key="+"0edaec47380b412da8708320f3e19f1c";
+        xhrRequest(uvURL, 'GET',
+          function(responseText) {
+            try {
+              uvData = JSON.parse(responseText);
+              uvValue = uvData.data[0].uv;
+              weather_string_uv = "UV " + Math.round(uvValue);
+              console.log("\n\n =============== UV 2 received successfully :====>>" + uvValue);
+            } catch(e) {
+              weather_string_uv = "FAIL";
+              UVFetch_error = 1;
+              console.log("UV 2 fetch failed :" + responseText);
+            }
+          }
+        )
+
       }
+      
+      // weather_string_uv = "VU01";
+      // if (!UVFetch_error) {
+          
+      //     console.log("\nUV update successful ====>>>>" + uvValue);
+      //     console.log("\n\n\n");
+      // }
+
     }
   )
-
-  
-  // fetch(uvURL, requestOptions)
-  // .then(response => response.json())
-  // .then(data => {
-  //   uvData = data;
-  //   console.log('\n\n', uvData);
-  // })
-  // .catch(error => console.log('UV Index fetch error: ', error));
   
   console.log("Weather URL = " + url);
   console.log("Weather Forecast URL = " + url_forecast);
@@ -402,6 +421,7 @@ function SendToPebble(pos, use_default) {
             WeatherDataJSON_error_str = responseText;
             console.log("could not parse returned text of weather data: " + e);
           }
+          
           
           
           //---------------------------------------------------------------------------------------------------
@@ -506,6 +526,7 @@ function SendToPebble(pos, use_default) {
               TempMin: 10000, // in Kelvin
               TempMax:     0  // in Kelvin
             };
+
             if (!ForecastDataJSON_error){
               console.log("forecast_list has " + ForecastDataJSON.cnt + " elements");
               var i;
@@ -517,14 +538,11 @@ function SendToPebble(pos, use_default) {
             }
             console.log("ForecastTempMin = "+Forecast.TempMin);
             console.log("ForecastTempMax = "+Forecast.TempMax);
-            
-            
                 
             var weather_Line_1 = "";
             var weather_Line_2 = "";
             var weather_Line_3 = "";
             var weather_Line_4 = "";
-            
             
             switch (configuration.weatherLine1){
               case 1:
@@ -666,7 +684,7 @@ function SendToPebble(pos, use_default) {
               "KEY_WEATHER_TEMP": temperature,
               "KEY_WEATHER_STRING_1": weather_string_1,
               "KEY_WEATHER_STRING_2": weather_string_2,
-              "KEY_WEATHER_STRING_UV": String(weather_string_uv),
+              "KEY_WEATHER_STRING_UV": weather_string_uv,
               "KEY_WEATHER_ICON": conditions_icon,
               "KEY_TIME_UTC_OFFSET": utc_offset,
               "KEY_TIME_ZONE_NAME": getTimeZone(),

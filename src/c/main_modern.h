@@ -599,7 +599,7 @@ void DisplayData(void) {
 
 	text_layer_set_text(weather_layer_7_string_1, weather_string_1);
 	text_layer_set_text(weather_layer_7_string_2, weather_string_2);
-	// text_layer_set_text(cwLayer, weather_string_uv);
+	text_layer_set_text(cwLayer, weather_string_uv);
 	text_layer_set_text(weather_layer_3_location, location_name);
 
 
@@ -999,22 +999,17 @@ static void handle_second_tick(struct tm* current_time, TimeUnits units_changed)
 	if (WeatherUpdateReceived) {
 		static char uv_stat[] = "UV 07"; //weather_string_uv;
 		static char uv_stat2[] = "UV --"; //weather_string_uv;
-		APP_LOG(APP_LOG_LEVEL_INFO, "\n======BEGIN=======\n");
-		APP_LOG(APP_LOG_LEVEL_INFO, uv_stat);
-		// APP_LOG(APP_LOG_LEVEL_INFO, sizeof(weather_string_uv) );
-		// APP_LOG(APP_LOG_LEVEL_INFO, weather_string_uv );
-		// char str[] = weather_string_1; // declare string
-		// APP_LOG(APP_LOG_LEVEL_INFO, str);
-    	// int i;
+		// APP_LOG(APP_LOG_LEVEL_INFO, "\n======BEGIN=======\n");
+		// APP_LOG(APP_LOG_LEVEL_INFO, uv_stat);
+		// APP_LOG(APP_LOG_LEVEL_INFO, "str ==> %s", weather_string_uv);
 
-		// for (int i = 0; i < 6 && weather_string_uv[i] != '\0'; i++) {
-		// 	uv_stat[i] = weather_string_uv[i]; // copy each character from str to uvs
-		// }
-		// uv_stat[i] = '\0'; // add null terminator to end of uvs
+		for (int i = 0; i < 6 && weather_string_uv[i] != '\0'; i++) {
+			uv_stat[i] = weather_string_uv[i]; // copy each character from str to uvs
+		}
 		
 		APP_LOG(APP_LOG_LEVEL_INFO, uv_stat);
 		text_layer_set_text(cwLayer, uv_stat);
-		APP_LOG(APP_LOG_LEVEL_INFO, "\n======END=======\n");
+		// APP_LOG(APP_LOG_LEVEL_INFO, "\n======END=======\n");
 	}
 
 #ifndef ITERATE_TEMP
@@ -1939,7 +1934,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				snprintf(weather_string_1, sizeof(weather_string_1), "%s", t->value->cstring);
 				replace_degree(weather_string_1, sizeof(weather_string_1));
 				//text_layer_set_text(weather_layer_7_string_1, weather_string_1);
-				APP_LOG(APP_LOG_LEVEL_INFO, "weather_string_1 = %s", weather_string_1);
+				// APP_LOG(APP_LOG_LEVEL_INFO, "\n[CUSTOM] weather_string_1 = %s\n", weather_string_1);
+				break;
+			case KEY_WEATHER_STRING_UV:
+				snprintf(weather_string_uv, sizeof(weather_string_uv), "%s", t->value->cstring);
+				replace_degree(weather_string_1, sizeof(weather_string_1));
+				//text_layer_set_text(weather_layer_7_string_1, weather_string_1);
+				// APP_LOG(APP_LOG_LEVEL_INFO, "\n============[CUSTOM] weather_string_uv = %s\n", weather_string_uv);
 				break;
 			case KEY_WEATHER_STRING_2:
 				snprintf(weather_string_2, sizeof(weather_string_2), "%s", t->value->cstring);
