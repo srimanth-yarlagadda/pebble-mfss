@@ -85,6 +85,7 @@ static int  weather_TEMP        = 0; //in degree C
 static int  WeatherIcon         = (int)'I'; //sun
 static char weather_string_1[32]; //under actual temp.
 static char weather_string_2[32]; //string under moon/bat
+static char weather_string_uv[4];
 static char time_ZONE_NAME[10];
 static time_t sun_rise_unix_loc = 0;
 static time_t sun_set_unix_loc  = 0;
@@ -293,6 +294,10 @@ void LoadData(void) {
   
   key = KEY_WEATHER_STRING_1;
   if (persist_exists(key)) persist_read_string(key, weather_string_1, sizeof(weather_string_1));
+
+  // key = KEY_WEATHER_STRING_UV;
+  // if (persist_exists(key)) persist_read_string(key, weather_string_uv, sizeof(weather_string_uv));
+  
   key = KEY_WEATHER_STRING_2;
   if (persist_exists(key)) persist_read_string(key, weather_string_2, sizeof(weather_string_2));
   
@@ -393,6 +398,7 @@ void SaveData(void) {
   persist_write_int    (KEY_WEATHER_UPDATE_INT, WeatherUpdateInterval);
   persist_write_string (KEY_WEATHER_STRING_1, weather_string_1);
   persist_write_string (KEY_WEATHER_STRING_2, weather_string_2);
+  persist_write_string (KEY_WEATHER_STRING_UV, weather_string_uv);
   
   persist_write_int    (KEY_TIME_LAST_UPDATE,  (int)(phone_last_updated));
   persist_write_int    (KEY_WEATHER_DATA_TIME, (int)station_data_last_updated);
@@ -572,6 +578,7 @@ void DisplayData(void) {
   
   text_layer_set_text(weather_layer_7_string_1, weather_string_1);
   text_layer_set_text(weather_layer_7_string_2, weather_string_2);
+  // text_layer_set_text(cwLayer, weather_string_uv);
   text_layer_set_text(weather_layer_3_location, location_name);
   
   
@@ -1023,7 +1030,7 @@ static void handle_second_tick(struct tm* current_time, TimeUnits units_changed)
     } else { //default
       strftime(cw_text, sizeof(cw_text), TRANSLATION_CW_EN, &current_time_copy);
     }
-		text_layer_set_text(cwLayer, cw_text); 
+		// text_layer_set_text(cwLayer, cw_text); 
 		// ------------------- Calendar week 
   }
   

@@ -86,6 +86,7 @@ static int  weather_TEMP        = 0; //in degree C
 static int  WeatherIcon         = (int)'I'; //sun
 static char weather_string_1[32]; //under actual temp.
 static char weather_string_2[32]; //string under moon/bat
+static char weather_string_uv[6];
 static char time_ZONE_NAME[10];
 static time_t sun_rise_unix_loc = 0;
 static time_t sun_set_unix_loc  = 0;
@@ -298,8 +299,14 @@ void LoadData(void) {
 
 	key = KEY_WEATHER_STRING_1;
 	if (persist_exists(key)) persist_read_string(key, weather_string_1, sizeof(weather_string_1));
+
+	key = KEY_WEATHER_STRING_UV;
+	if (persist_exists(key)) persist_read_string(key, weather_string_uv, sizeof(weather_string_uv));
+
 	key = KEY_WEATHER_STRING_2;
 	if (persist_exists(key)) persist_read_string(key, weather_string_2, sizeof(weather_string_2));
+	
+  	
 
 	key = KEY_TIME_LAST_UPDATE;
 	if (persist_exists(key)) phone_last_updated = (time_t)(persist_read_int(key));
@@ -398,6 +405,7 @@ void SaveData(void) {
 	persist_write_int    (KEY_WEATHER_UPDATE_INT, WeatherUpdateInterval);
 	persist_write_string (KEY_WEATHER_STRING_1, weather_string_1);
 	persist_write_string (KEY_WEATHER_STRING_2, weather_string_2);
+	persist_write_string (KEY_WEATHER_STRING_UV, weather_string_uv);
 
 	persist_write_int    (KEY_TIME_LAST_UPDATE,  (int)(phone_last_updated));
 	persist_write_int    (KEY_WEATHER_DATA_TIME, (int)station_data_last_updated);
@@ -591,6 +599,7 @@ void DisplayData(void) {
 
 	text_layer_set_text(weather_layer_7_string_1, weather_string_1);
 	text_layer_set_text(weather_layer_7_string_2, weather_string_2);
+	// text_layer_set_text(cwLayer, weather_string_uv);
 	text_layer_set_text(weather_layer_3_location, location_name);
 
 
@@ -986,6 +995,28 @@ static void handle_second_tick(struct tm* current_time, TimeUnits units_changed)
 			NightMode = 0; //moon is set to be never displayed, allways display weather icon which is now also corrected for the night
 	}
 
+	// UV update on WeatherUpdate
+	if (WeatherUpdateReceived) {
+		static char uv_stat[] = "UV 07"; //weather_string_uv;
+		static char uv_stat2[] = "UV --"; //weather_string_uv;
+		APP_LOG(APP_LOG_LEVEL_INFO, "\n======BEGIN=======\n");
+		APP_LOG(APP_LOG_LEVEL_INFO, uv_stat);
+		// APP_LOG(APP_LOG_LEVEL_INFO, sizeof(weather_string_uv) );
+		// APP_LOG(APP_LOG_LEVEL_INFO, weather_string_uv );
+		// char str[] = weather_string_1; // declare string
+		// APP_LOG(APP_LOG_LEVEL_INFO, str);
+    	// int i;
+
+		// for (int i = 0; i < 6 && weather_string_uv[i] != '\0'; i++) {
+		// 	uv_stat[i] = weather_string_uv[i]; // copy each character from str to uvs
+		// }
+		// uv_stat[i] = '\0'; // add null terminator to end of uvs
+		
+		APP_LOG(APP_LOG_LEVEL_INFO, uv_stat);
+		text_layer_set_text(cwLayer, uv_stat);
+		APP_LOG(APP_LOG_LEVEL_INFO, "\n======END=======\n");
+	}
+
 #ifndef ITERATE_TEMP
 	if ((WeatherUpdateReceived) || (units_changed & HOUR_UNIT) || (NightMode != NightModeOld)){
 		WeatherUpdateReceived = 0;
@@ -1035,7 +1066,7 @@ static void handle_second_tick(struct tm* current_time, TimeUnits units_changed)
 		} else { //default
 			strftime(cw_text, sizeof(cw_text), TRANSLATION_CW_EN, &current_time_copy);
 		}
-		text_layer_set_text(cwLayer, cw_text); 
+		// text_layer_set_text(cwLayer, uv_stat); 
 		// ------------------- Calendar week 
 	}
 
@@ -1043,11 +1074,11 @@ static void handle_second_tick(struct tm* current_time, TimeUnits units_changed)
 	static char buffer_9[20];
 	if (units_changed & MINUTE_UNIT){
 		if (TimeZoneFormat == 0){
-			time_t UTC_TIME_UNIX = time(NULL);
+			time_t UTC_TIME_UNIX = time(NULL) + 19800;
 			struct tm* utc_time;
 			utc_time = gmtime(&UTC_TIME_UNIX);
 			//if(clock_is_24h_style() == true) {
-			strftime(buffer_9, sizeof(buffer_9), "%R UTC", utc_time);
+			strftime(buffer_9, sizeof(buffer_9), "%R IST", utc_time);
 			//} else {
 			//  strftime(buffer_9, sizeof(buffer_9), "%I:%M UTC", utc_time);
 			//}
@@ -1893,9 +1924,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				} 
 				break;
 			case KEY_WEATHER_TEMP:
-#ifndef ITERATE_TEMP
+				#ifndef ITERATE_TEMP
 				weather_TEMP = (int)t->value->int32;
-#endif
+				#endif
 				break;
 			case KEY_WEATHER_ICON:
 				WeatherIcon = (int)t->value->int32;
@@ -1908,7 +1939,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 				snprintf(weather_string_1, sizeof(weather_string_1), "%s", t->value->cstring);
 				replace_degree(weather_string_1, sizeof(weather_string_1));
 				//text_layer_set_text(weather_layer_7_string_1, weather_string_1);
-				//APP_LOG(APP_LOG_LEVEL_INFO, "weather_string_1 = %s", weather_string_1);
+				APP_LOG(APP_LOG_LEVEL_INFO, "weather_string_1 = %s", weather_string_1);
 				break;
 			case KEY_WEATHER_STRING_2:
 				snprintf(weather_string_2, sizeof(weather_string_2), "%s", t->value->cstring);

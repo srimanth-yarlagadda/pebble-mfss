@@ -9,6 +9,7 @@
 #define KEY_WEATHER_UPDATE_INT  7 //Update Interval in minutes
 #define KEY_WEATHER_STRING_1    8 //in this string, all infos for the text under the temp. will be collected. (including \n)
 #define KEY_WEATHER_STRING_2    9 //in this string, all infos for the text under the moon and battery will be collected.
+#define KEY_WEATHER_STRING_UV 150
 #define KEY_TIME_UTC_OFFSET    10
 #define KEY_TIME_LAST_UPDATE   11
 #define KEY_TIME_ZONE_NAME     12
