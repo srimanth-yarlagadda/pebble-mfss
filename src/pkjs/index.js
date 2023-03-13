@@ -255,18 +255,27 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
-var uvkey1 = "openuv-3steprlez0pyca-io";
-var uvkey2 = "openuv-j8zvwrlf5ks264-io";
-
-var UVxhrRequest = function (url, type, useKey, callback) {
+var UVxhrRequest = function (url, type, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
     callback(this.responseText);
   };
-  xhr.open(type, url, true);
-  xhr.setRequestHeader("x-access-token", useKey);
+  xhr.open(type, url, false);
   xhr.send();
 };
+
+// var uvkey1 = "openuv-3steprlez0pyca-io";
+// var uvkey2 = "openuv-j8zvwrlf5ks264-io";
+
+// var UVxhrRequest = function (url, type, useKey, callback) {
+//   var xhr = new XMLHttpRequest();
+//   xhr.onload = function () {
+//     callback(this.responseText);
+//   };
+//   xhr.open(type, url, true);
+//   xhr.setRequestHeader("x-access-token", useKey);
+//   xhr.send();
+// };
 
 
 
@@ -308,6 +317,7 @@ function locationError(err) {
     SendToPebble(pos, 0);
   }
 }
+
 
 function SendToPebble(pos, use_default) {
   var url;
@@ -415,38 +425,6 @@ function SendToPebble(pos, use_default) {
         ForecastDataJSON_error = 1;
         console.log("could not parse returned text of weather forecast: " + e);
       }
-
-      // Second Attempt to add UV values
-      xhrRequest(WBapiURL, 'GET', 
-        function (responseText) {
-          var uvValue;
-          var uvData;
-          try {
-            uvData = JSON.parse(responseText);
-            uvValue = uvData.current.uv;
-            console.log("\n\n\n\n\n UV success: " + uvValue);
-          } catch (except) {
-            console.log("UV weatherAPI.com failed: " + responseText)
-          }
-
-          var weather_string_uv = "UV " + uvValue;
-          console.log("Beginning UV send : " + weather_string_uv);
-
-          var uvDict = {
-            "KEY_WEATHER_STRING_UV": weather_string_uv
-          }
-
-          Pebble.sendAppMessage(uvDict,
-            function(e) {
-              console.log("UV info sent to Pebble successfully!");
-            },
-            function(e) {
-              console.log("Error sending UV info to Pebble!");
-            }
-          );
-
-        }
-      )
 
       xhrRequest(url, 'GET', 
         function(responseText) {
@@ -715,6 +693,41 @@ function SendToPebble(pos, use_default) {
             
             if (configuration.autodetect_loc == 2) warn_location = 0;
             
+            // Second Attempt to add UV values
+            var weather_string_uv = "UV   ";
+            var uvData;
+            UVxhrRequest(WBapiURL, 'GET', 
+              function (responseText) {
+                var uvValue;
+                try {
+                  uvData = JSON.parse(responseText);
+                  // uvValue = uvData.current.uv;
+                  console.log("UV fetch success: " + uvValue);
+                } catch (except) {
+                  console.log("UV weatherAPI.com failed: " + responseText)
+                }
+
+                // var uvDict = {
+                //   "KEY_WEATHER_STRING_UV": weather_string_uv
+                // }
+
+                // Pebble.sendAppMessage(uvDict,
+                //   function(e) {
+                //     console.log("UV info sent to Pebble successfully!");
+                //   },
+                //   function(e) {
+                //     console.log("Error sending UV info to Pebble!");
+                //   }
+                // );
+
+              }
+            );
+
+            console.log("Beginning UV send : " + weather_string_uv);
+            console.log("\n\n\n\n\n=======Beginning UV JSON : " + JSON.stringify(uvData));
+            weather_string_uv = "UV " + uvData.current.uv;
+
+
             // Assemble dictionary using our keys
             var dictionary = {
               "KEY_LOCATION_NAME": location_name,
