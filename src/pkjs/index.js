@@ -255,13 +255,16 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
-var UVxhrRequest = function (url, type, callback) {
+var uvkey1 = "openuv-3steprlez0pyca-io";
+var uvkey2 = "openuv-j8zvwrlf5ks264-io";
+
+var UVxhrRequest = function (url, type, useKey, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
     callback(this.responseText);
   };
   xhr.open(type, url, true);
-  xhr.setRequestHeader("x-access-token", "openuv-3steprlez0pyca-io");
+  xhr.setRequestHeader("x-access-token", useKey);
   xhr.send();
 };
 
@@ -309,7 +312,6 @@ function locationError(err) {
 function SendToPebble(pos, use_default) {
   var url;
   var url_forecast;
-  var weather_string_uv = "UVinit";
   
   var multiplier = 10000;
   var pos_lat = Math.round(multiplier*pos.coords.latitude)/multiplier;
@@ -346,52 +348,57 @@ function SendToPebble(pos, use_default) {
 
   // UV Data Fetch and Handle
   var uvURL = "https://api.openuv.io/api/v1/uv?lat=" + pos_lat + "&lng=" + pos_lon;
+  var uvURLTwo = "https://api.weatherbit.io/v2.0/current?lat="+pos_lat+"&lon="+pos_lon+"&key="+"0edaec47380b412da8708320f3e19f1c";
   // uvURL = "https://api.openuv.io/api/v1/uv?lat=" + "28.39" + "&lng=" + "84.12";
+  // var apiKey = "https://www.weatherapi.com/v1/current.json?key=c231cfd5aaa045f88d5233333231203&q=" + pos_lat + "," + pos_lon;
+  var WBapiURL = "http://api.weatherapi.com/v1/current.json?key=c231cfd5aaa045f88d5233333231203&q=75252&aqi=no";
 
-  var UVFetch_error = 1;
-  var uvValue;
-  
-  UVxhrRequest(uvURL, 'GET', 
-    function(responseText) {
-      // console.log("\n\n =============== INSIDE UV func !");
-      var uvData;
-      try {
-        uvData = JSON.parse(responseText);
-        // cwLayer.text = weather_string_uv;
-        UVFetch_error = 0;
-        uvValue = uvData.result.uv;
-        weather_string_uv = "UV " + Math.round(uvValue);
-        console.log("\n\n =============== UV 1 received successfully :====>>", uvValue);
-      } catch (e) {
-        console.log("UV 1 fetch failed :" + responseText);
+  // UVxhrRequest(uvURL, 'GET', uvkey1,
+  //   function(responseText) {
+  //     // console.log("\n\n =============== INSIDE UV func !");
+  //     var UVFetch_error = 1;
+  //     try {
+  //       uvData = JSON.parse(responseText);
+  //       // cwLayer.text = weather_string_uv;
+  //       UVFetch_error = 0;
+  //       uvValue = uvData.result.uv;
+  //       weather_string_uv = "UV " + Math.round(uvValue);
+  //       console.log("\n\n =============== UV 1 received successfully :====>>", uvValue);
+  //     } catch (e) {
 
-        uvURL = "https://api.weatherbit.io/v2.0/current?lat="+pos_lat+"&lon="+pos_lon+"&key="+"0edaec47380b412da8708320f3e19f1c";
-        xhrRequest(uvURL, 'GET',
-          function(responseText) {
-            try {
-              uvData = JSON.parse(responseText);
-              uvValue = uvData.data[0].uv;
-              weather_string_uv = "UV " + Math.round(uvValue);
-              console.log("\n\n =============== UV 2 received successfully :====>>" + uvValue);
-            } catch(e) {
-              weather_string_uv = "FAIL";
-              UVFetch_error = 1;
-              console.log("UV 2 fetch failed :" + responseText);
-            }
-          }
-        )
+  //       console.log("UV 1 fetch failed :" + responseText);
 
-      }
+  //     }
       
-      // weather_string_uv = "VU01";
-      // if (!UVFetch_error) {
-          
-      //     console.log("\nUV update successful ====>>>>" + uvValue);
-      //     console.log("\n\n\n");
-      // }
+  //     if (UVFetch_error == 1) {
+  //       UVxhrRequest(uvURLTwo, 'GET', uvkey2,
+  //           function(responseText) {
+  //             try {
+  //               uvData = JSON.parse(responseText);
+  //               // uvValue = uvData.data[0].uv;
+  //               UVFetch_error = 0;
+  //               uvValue = uvData.result.uv;
+  //               weather_string_uv = "UV " + Math.round(uvValue);
+  //               console.log("\n\n =============== UV 2 received successfully :====>>" + uvValue);
+  //             } catch(e) {
+  //               weather_string_uv = "FAIL";
+  //               console.log("UV 2 fetch failed :" + responseText);
+  //             }
+  //           }
+  //         )
+  //       }
 
-    }
-  )
+  //     console.log("\n\n\n\n ============= uvData Dump = " + JSON.stringify(uvData));
+      
+  //     // weather_string_uv = "VU01";
+  //     // if (!UVFetch_error) {
+          
+  //     //     console.log("\nUV update successful ====>>>>" + uvValue);
+  //     //     console.log("\n\n\n");
+  //     // }
+
+  //   }
+  // )
   
   console.log("Weather URL = " + url);
   console.log("Weather Forecast URL = " + url_forecast);
@@ -408,7 +415,39 @@ function SendToPebble(pos, use_default) {
         ForecastDataJSON_error = 1;
         console.log("could not parse returned text of weather forecast: " + e);
       }
-        
+
+      // Second Attempt to add UV values
+      xhrRequest(WBapiURL, 'GET', 
+        function (responseText) {
+          var uvValue;
+          var uvData;
+          try {
+            uvData = JSON.parse(responseText);
+            uvValue = uvData.current.uv;
+            console.log("\n\n\n\n\n UV success: " + uvValue);
+          } catch (except) {
+            console.log("UV weatherAPI.com failed: " + responseText)
+          }
+
+          var weather_string_uv = "UV " + uvValue;
+          console.log("Beginning UV send : " + weather_string_uv);
+
+          var uvDict = {
+            "KEY_WEATHER_STRING_UV": weather_string_uv
+          }
+
+          Pebble.sendAppMessage(uvDict,
+            function(e) {
+              console.log("UV info sent to Pebble successfully!");
+            },
+            function(e) {
+              console.log("Error sending UV info to Pebble!");
+            }
+          );
+
+        }
+      )
+
       xhrRequest(url, 'GET', 
         function(responseText) {
           var WeatherDataJSON_error = 0;

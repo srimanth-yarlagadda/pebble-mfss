@@ -997,13 +997,9 @@ static void handle_second_tick(struct tm* current_time, TimeUnits units_changed)
 
 	// UV update on WeatherUpdate
 	if (WeatherUpdateReceived) {
-		static char uv_stat[] = "UV 07"; //weather_string_uv;
-		static char uv_stat2[] = "UV --"; //weather_string_uv;
-		// APP_LOG(APP_LOG_LEVEL_INFO, "\n======BEGIN=======\n");
-		// APP_LOG(APP_LOG_LEVEL_INFO, uv_stat);
-		// APP_LOG(APP_LOG_LEVEL_INFO, "str ==> %s", weather_string_uv);
+		static char uv_stat[] = "UV   "; //weather_string_uv;
 
-		for (int i = 0; i < 6 && weather_string_uv[i] != '\0'; i++) {
+		for (int i = 0; weather_string_uv[i] != '\0'; i++) {
 			uv_stat[i] = weather_string_uv[i]; // copy each character from str to uvs
 		}
 		
